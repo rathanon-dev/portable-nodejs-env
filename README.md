@@ -16,6 +16,11 @@
 ```powershell
 .\setup.ps1 -i all
 ```
+หรือ 
+```powershell
+.\setup.ps1 -h #(Option more)
+```
+
 ### 2. รันโปรเจกต์
 คุณสามารถรันโปรเจกต์ของคุณได้โดย:
 
