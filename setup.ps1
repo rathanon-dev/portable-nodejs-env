@@ -8,7 +8,10 @@ param (
     [string]$url = "",
 
     [Alias("help")]
-    [switch]$h
+    [switch]$h ,
+
+    [Alias("Environment")]
+    [switch]$env
 )
 
 # 🛑 1. Cleanup Background Processes
@@ -45,6 +48,7 @@ function Show-Help {
     Write-Host "  -url <link>           Clone a GitHub repository and run it"
     Write-Host "`nExamples:"
     Write-Host "  .\setup.ps1                      (Smart Default: Auto-run or choose project)"
+    Write-Host "  .\setup.ps1 -e                   (Dev Environment Mode)"
     Write-Host "  .\setup.ps1 -i node              (Install only Node.js)"
     Write-Host "  .\setup.ps1 -i all               (Install Git and Node.js)"
     Write-Host "  .\setup.ps1 -url https://...     (Clone repository and run)"
@@ -57,13 +61,44 @@ function Expand-With7z([string]$ArchiveFilePath, [string]$DestinationPath) {
 
 function Install-7Zip {
     if (-not (Test-Path $7zExe)) {
-        Write-Host "Downloading 7-Zip..." -ForegroundColor Yellow
-        $tempZip = "$tempDir\7z_temp.zip"
-        $tempExtract = "$tempDir\7z_temp_extract"
-        Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/7-Zip.CommandLine/18.1.0" -OutFile $tempZip -ErrorAction Stop
-        Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
-        Move-Item -Path "$tempExtract\tools\7za.exe" -Destination $7zExe -Force
-        Write-Host "✅ 7-Zip Ready." -ForegroundColor Green
+        Write-Host "🔍 Checking for the latest 7-Zip version on NuGet..." -ForegroundColor Cyan
+        
+        try {
+            # 1. ใช้ NuGet v3 API Endpoint สำหรับค้นหาข้อมูลแพ็กเกจแบบระบุชื่อ (7-Zip.CommandLine)
+            $nugetUrl = "https://azuresearch-usnc.nuget.org/query?q=packageid:7-Zip.CommandLine&prerelease=false"
+            $packageInfo = Invoke-RestMethod -Uri $nugetUrl -ErrorAction Stop
+            
+            # ดึงเวอร์ชันล่าสุดจากข้อมูลที่ NuGet ส่งกลับมา
+            $latestVersion = $packageInfo.data[0].version
+            
+            if ([string]::IsNullOrEmpty($latestVersion)) {
+                throw "Could not retrieve version from NuGet API response."
+            }
+            
+            Write-Host "📦 Found latest version: $latestVersion" -ForegroundColor Green
+            Write-Host "Downloading 7-Zip v$latestVersion..." -ForegroundColor Yellow
+            
+            # 2. กำหนด Path สำหรับดาวน์โหลดและแตกไฟล์
+            $tempZip = "$tempDir\7z_temp.zip"
+            $tempExtract = "$tempDir\7z_temp_extract"
+            
+            # 3. สร้าง URL ดาวน์โหลดไฟล์ .nupkg ตรงๆ โดยระบุเวอร์ชันแบบ Dynamic (ใช้ URL ของตัวแทนจำหน่ายที่เป็นทางการ)
+            $downloadUrl = "https://www.nuget.org/api/v2/package/7-Zip.CommandLine/$latestVersion"
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -ErrorAction Stop
+            
+            # 4. แตกไฟล์และย้ายตำแหน่งไปยังโฟลเดอร์ปลายทาง
+            Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
+            Move-Item -Path "$tempExtract\tools\7za.exe" -Destination $7zExe -Force
+            
+            # 5. ล้างขยะไฟล์ชั่วคราว
+            Remove-Item -Path $tempZip, $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+            
+            Write-Host "✅ 7-Zip v$latestVersion Ready." -ForegroundColor Green
+        }
+        catch {
+            Write-Host "❌ Error: Failed to fetch or download the latest 7-Zip from NuGet." -ForegroundColor Red
+            Write-Host "Details: $_" -ForegroundColor DarkGray
+        }
     }
 }
 
@@ -103,7 +138,7 @@ function Install-Node {
     } else { Write-Host "✅ Node.js is ready." -ForegroundColor Green }
 }
 
-function Cleanup-Temp {
+function Clear-Temp {
     if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
@@ -139,7 +174,7 @@ if ($i) {
     Install-7Zip
     if ($tool -eq 'git' -or $tool -eq 'all') { Install-Git }
     if ($tool -eq 'node' -or $tool -eq 'all') { Install-Node }
-    Cleanup-Temp
+    Clear-Temp
     
     Write-Host "`n🎉 Installation Complete!" -ForegroundColor Green
     Exit
@@ -151,13 +186,29 @@ if ($i) {
 Install-7Zip
 Install-Git
 Install-Node
-Cleanup-Temp
+Clear-Temp
 
 Show-EnvironmentStatus
 # Inject PATH variables
 $env:PATH = "$nodeDir;$gitDir\cmd;$7zDir;$env:PATH"
 
-$targetDir = ""
+$targetDir = $null
+
+if ($env) {
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host "[ON] Dev Environment MODE" -ForegroundColor Green
+    Write-Host "==========================================" -ForegroundColor Cyan
+    # แสดงเวอร์ชัน Node.js และ Git ปกติ
+    Write-Host "node -v : " -NoNewline -ForegroundColor Gray; node -v
+    Write-Host "git -v : " -NoNewline -ForegroundColor Gray; git --version
+    
+    # ดึงผลลัพธ์ 7za มาเฉพาะบรรทัดแรกบรรทัดเดียว
+    Write-Host "7za -h : " -NoNewline -ForegroundColor Gray
+    (7za -h) | Select-Object -First 2
+    Set-Location $root
+    Write-Host "`n↩️ Returned to root directory: $root" -ForegroundColor DarkGray
+    Exit
+}
 
 # [Option 3] URL Mode (-url)
 if ($url) {
@@ -220,11 +271,23 @@ else {
 Set-Location $targetDir
 
 if (-not (Test-Path "package.json")) {
-    Write-Host "❌ Error: 'package.json' not found. This project might not run." -ForegroundColor Red; Exit
+    Write-Host "❌ Error: 'package.json' not found. This project might not run." -ForegroundColor Red
+    Exit
 }
 
+# 1. รัน npm install เพื่อเตรียมโปรเจกต์
 Write-Host "`n📦 Running npm install..." -ForegroundColor Yellow
 npm install
 
-Write-Host "`n🚀 Starting Development Server (npm run dev)..." -ForegroundColor Green
-npm run dev
+# 2. ใช้ try/finally ครอบตอนรัน Server เพื่อดักจับการกด Ctrl + C
+try {
+    Write-Host "`n🚀 Starting Development Server (npm run dev)..." -ForegroundColor Green
+    Write-Host "💡 Press Ctrl + C to stop the server" -ForegroundColor DarkGray
+    npm run dev
+}
+finally {
+    # บล็อกนี้จะทำงานทันทีหลังจากที่คุณกด Ctrl + C 
+    Write-Host "`n↩️ Returning to root directory..." -ForegroundColor Cyan
+    Write-Host "Back to root directory: $root" -ForegroundColor Green
+    Set-Location $root
+}
