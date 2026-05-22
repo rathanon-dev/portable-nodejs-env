@@ -38,16 +38,16 @@ function Show-Help {
     Write-Host "`n==========================================" -ForegroundColor Cyan
     Write-Host " 🚀 Portable Dev Environment - CLI Tool" -ForegroundColor Green
     Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "Usage: .\runs.ps1 [Options]`n" -ForegroundColor Yellow
+    Write-Host "Usage: .\setup.ps1 [Options]`n" -ForegroundColor Yellow
     Write-Host "Options:"
     Write-Host "  -h, -help             Show this help message"
     Write-Host "  -i, -install <tool>   Install specific tools ('git', 'node', 'all')"
     Write-Host "  -url <link>           Clone a GitHub repository and run it"
     Write-Host "`nExamples:"
-    Write-Host "  .\runs.ps1                      (Smart Default: Auto-run or choose project)"
-    Write-Host "  .\runs.ps1 -i node              (Install only Node.js)"
-    Write-Host "  .\runs.ps1 -i all               (Install Git and Node.js)"
-    Write-Host "  .\runs.ps1 -url https://...     (Clone repository and run)"
+    Write-Host "  .\setup.ps1                      (Smart Default: Auto-run or choose project)"
+    Write-Host "  .\setup.ps1 -i node              (Install only Node.js)"
+    Write-Host "  .\setup.ps1 -i all               (Install Git and Node.js)"
+    Write-Host "  .\setup.ps1 -url https://...     (Clone repository and run)"
     Write-Host "==========================================`n" -ForegroundColor Cyan
 }
 
