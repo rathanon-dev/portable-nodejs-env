@@ -420,6 +420,7 @@ function Show-Help {
     Write-SetupStatus -Message "   .\setup.ps1 [OPTIONS]" -Type RAW -Color White
     Write-SetupStatus -Message "[OPTIONS]" -Type RAW -Color Yellow
     Write-SetupStatus -Message "  -h, --help            Show this help manual" -Type RAW -Color White
+    Write-SetupStatus -Message "  -p, --proxy <url>     Override proxy (e.g. -p disable, -p 10.0.0.5:8080)" -Type RAW -Color White
     Write-SetupStatus -Message "  -l, --list <tool>     List available versions ('node')" -Type RAW -Color White
     Write-SetupStatus -Message "  -i, --install <tool>  Install tools ('node', 'all', 'git')" -Type RAW -Color White
     Write-SetupStatus -Message "  -v, --version <ver>   Specify target version (e.g., -v 18, -v 20)" -Type RAW -Color White
