@@ -279,7 +279,8 @@ function Invoke-FallbackDownload {
 # ========================================================
 
 function Install-7Zip {
-    if (-not $ForceReinstall -and (Test-Path $7zExe)) { return }
+    $shouldForce = $ForceReinstall -and ($InstallTool -in @('all', 'git'))
+    if (-not $shouldForce -and (Test-Path $7zExe)) { return }
     Write-SetupStatus -Message "[BOOTSTRAP] Setting up 7-Zip Core Engine..." -Type WARN
     try {
         $nugetUrl = Get-ProxifiedUrl -OriginalUrl "https://azuresearch-usnc.nuget.org/query?q=packageid:7-Zip.CommandLine&prerelease=false"
@@ -297,7 +298,8 @@ function Install-7Zip {
 }
 
 function Install-Aria2 {
-    if (-not $ForceReinstall -and (Test-Path $aria2Exe)) { return }
+    $shouldForce = $ForceReinstall -and ($InstallTool -in @('all', 'git'))
+    if (-not $shouldForce -and (Test-Path $aria2Exe)) { return }
     Write-SetupStatus -Message "[BOOTSTRAP] Setting up Aria2 Downloader..." -Type WARN
     try {
         $apiUrl = Get-ProxifiedUrl -OriginalUrl "https://api.github.com/repos/aria2/aria2/releases/latest"
@@ -321,7 +323,8 @@ function Install-Aria2 {
 
 function Install-Git {
     $gitBin = if (Test-Path "$gitDir\cmd\git.exe") { "$gitDir\cmd\git.exe" } else { "$gitDir\bin\git.exe" }
-    if (-not $ForceReinstall -and (Test-Path $gitBin)) { return }
+    $shouldForce = $ForceReinstall -and ($InstallTool -in @('all', 'git'))
+    if (-not $shouldForce -and (Test-Path $gitBin)) { return }
     Write-SetupStatus -Message "[BOOTSTRAP] Setting up Git Portable..." -Type WARN
     try {
         $gitApiUrl = Get-ProxifiedUrl -OriginalUrl "https://api.github.com/repos/git-for-windows/git/releases/latest"
