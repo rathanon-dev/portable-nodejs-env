@@ -352,8 +352,20 @@ function Update-SessionPath {
     $env:PATH = "$nodeDir;$resolvedGit;$7zDir;$aria2Dir;$env:PATH"
 }
 
+function Configure-NpmProxy {
+    if (Get-Command "npm" -ErrorAction Ignore) {
+        if (Test-ProxyHealth) {
+            Write-SetupStatus -Message "[PROXY] Auto-configuring npm to use OmniProxy Gateway..." -Type INFO
+            npm config set registry "$ProxyServerUrl/npm/"
+        } else {
+            npm config delete registry 2>$null
+        }
+    }
+}
+
 function Enter-LiveDevShell {
     Update-SessionPath
+    Configure-NpmProxy
     Set-Location $workspaceDir
     Write-SetupStatus -Message "`n==========================================================" -Type RAW -Color Cyan
     Write-SetupStatus -Message " [ON] Node.js Dev Environment ACTIVE SHELL MODE" -Type RAW -Color Green
@@ -445,6 +457,7 @@ if ($RunMode) {
     Ensure-CoreTools; Install-Node
     if (Test-Path $mainTempDir) { Remove-Item $mainTempDir -Recurse -Force -ErrorAction SilentlyContinue }
     Update-SessionPath
+    Configure-NpmProxy
     $targetFolder = $null
 
     if ($RemainingArgs.Count -gt 0) {
