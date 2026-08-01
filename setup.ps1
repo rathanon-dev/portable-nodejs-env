@@ -133,21 +133,44 @@ function Invoke-SetupCommand {
         [switch]$NoOutput,
         [switch]$RedirectError,
         [switch]$AsString,
-        [switch]$Parse7ZipProgress
+        [switch]$Parse7ZipProgress,
+        [string]$ProgressLabel = "Processing"
     )
     
     if ($Parse7ZipProgress) {
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = $CommandPath
+        $psi.Arguments = $ArgumentList -join " "
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $psi
+        $process.Start() | Out-Null
+
+        $buffer = New-Object char[] 64
         $lastPercent = -1
-        & $CommandPath @ArgumentList | ForEach-Object {
-            if ($_ -match '(\d+)%') {
-                $percent = [int]$Matches[1]
-                if ($percent -ne $lastPercent -and $percent -le 100) {
-                    Write-Host -NoNewline "`r  -> Processing... $percent% Complete  "
-                    $lastPercent = $percent
+        $reader = $process.StandardOutput
+        while (-not $reader.EndOfStream) {
+            $readCount = $reader.Read($buffer, 0, $buffer.Length)
+            if ($readCount -gt 0) {
+                $text = new-object string($buffer, 0, $readCount)
+                $matches = [regex]::Matches($text, '(\d+)%')
+                if ($matches.Count -gt 0) {
+                    $percent = [int]$matches[$matches.Count - 1].Groups[1].Value
+                    if ($percent -ne $lastPercent -and $percent -le 100) {
+                        Write-Host -NoNewline "`r  -> $ProgressLabel... $percent% Complete  "
+                        $lastPercent = $percent
+                    }
                 }
             }
         }
-        Write-Host -NoNewline "`r  -> Processing... 100% Complete  `n"
+        $process.WaitForExit()
+        Write-Host -NoNewline "`r  -> $ProgressLabel... 100% Complete  `n"
+        $global:LASTEXITCODE = $process.ExitCode
         return
     }
     
