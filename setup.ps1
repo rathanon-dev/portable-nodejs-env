@@ -16,6 +16,7 @@ param (
     [Alias("force", "f")][switch]$ForceReinstall,
     [Alias("yes", "y")][switch]$AutoYes,
     [Alias("help", "h")][switch]$ShowHelp,
+    [Alias("proxy", "p")][string]$ProxyOverride = "",
 
     # Catch remaining arguments for commands like `-r my-app`
     [Parameter(ValueFromRemainingArguments=$true)]
@@ -24,6 +25,17 @@ param (
 
 # Enforce TLS 1.2 for all web requests (PS 5.1 Standard)
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+if (-not [string]::IsNullOrWhiteSpace($ProxyOverride)) {
+    if ($ProxyOverride -match "^(disable|none|off)$") {
+        $global:EnableProxy = $false
+    } else {
+        $global:EnableProxy = $true
+        $global:ProxyServerUrl = $ProxyOverride
+        if ($ProxyServerUrl -notmatch "^http") { $global:ProxyServerUrl = "http://$ProxyServerUrl" }
+    }
+}
+
 Stop-Process -Name "7za", "aria2c", "node", "git" -Force -ErrorAction SilentlyContinue
 
 # ========================================================
