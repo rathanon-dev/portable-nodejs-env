@@ -30,6 +30,9 @@ You can install all tools at once, or selectively install what you need:
 .\setup.ps1 -i all    # (Installs 7-Zip, Git, Node.js)
 .\setup.ps1 -i node   # (Installs Node.js only)
 .\setup.ps1 -i git    # (Installs Git only)
+
+# Install Node.js by overriding the Proxy temporarily (e.g., to a Local Proxy)
+.\setup.ps1 -i node -p http://192.168.1.2:8080 -y
 ```
 
 ### 3. Dev Environment Shell Mode
