@@ -8,7 +8,7 @@ setlocal enabledelayedexpansion
 :: Default Parameter: -r (Run Mode)
 :: -r : Auto-detect projects in 'workspace/', cd into it, and npm run dev.
 ::      If no projects found, it safely falls back to 'workspace/' shell.
-set "PARAM=-r -u https://github.com/firebase/quickstart-js"
+set "PARAM=-r"
 
 :: ============================================================================
 :: 🚫 SYSTEM LOGIC ENGINE (ห้ามแก้ไขโค้ดตั้งแต่บรรทัดนี้เป็นต้นไป)
