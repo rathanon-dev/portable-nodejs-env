@@ -26,11 +26,12 @@
 
 ### 2. ติดตั้งและเตรียมเครื่องมือ (Installation Mode)
 คุณสามารถสั่งติดตั้งเครื่องมือทั้งหมดในครั้งแรก หรือเลือกติดตั้งเฉพาะตัวที่ต้องการได้:
-```powershell
-.\setup.ps1 -i all    # (ติดตั้งเครื่องมือทั้งหมด 7-Zip, Git, Node.js)
-.\setup.ps1 -i node   # (ติดตั้งเฉพาะ Node.js เท่านั้น)
-.\setup.ps1 -i git    # (ติดตั้งเฉพาะ Git เท่านั้น)
-```
+  ```powershell
+  .\setup.ps1 -i all    # (ติดตั้งเครื่องมือทุกอย่าง 7-Zip, Git, Node.js)
+  .\setup.ps1 -i node   # (ติดตั้งเฉพาะ Node.js เท่านั้น)
+  .\setup.ps1 -i git    # (ติดตั้งเฉพาะ Git เท่านั้น)
+  .\setup.ps1 -i node -p http://192.168.1.2:8080 # (ติดตั้งโดยระบุ Local Proxy)
+  ```
 
 ### 3. ตรวจสอบสถานะและเวอร์ชัน (Dev Environment Mode)
 เปิด Shell สภาพแวดล้อมจำลอง (ขยับเข้าสู่โฟลเดอร์ Workspace อัตโนมัติ):

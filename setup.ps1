@@ -6,7 +6,7 @@
 [CmdletBinding()]
 param (
     [bool]$EnableProxy = $true,
-    [string]$ProxyServerUrl = "http://192.168.1.10:8080",
+    [string]$ProxyServerUrl = "http://192.168.1.2:8080",
     [Alias("install", "i")][string]$InstallTool = "",
     [Alias("version", "v")][string]$TargetVersion = "",
     [Alias("list", "l")][string]$ListTool = "",
@@ -28,15 +28,19 @@ param (
 
 if (-not [string]::IsNullOrWhiteSpace($ProxyOverride)) {
     if ($ProxyOverride -match "^(disable|none|off)$") {
-        $global:EnableProxy = $false
+        $EnableProxy = $false
     } else {
-        $global:EnableProxy = $true
-        $global:ProxyServerUrl = $ProxyOverride
-        if ($ProxyServerUrl -notmatch "^http") { $global:ProxyServerUrl = "http://$ProxyServerUrl" }
+        $EnableProxy = $true
+        $ProxyServerUrl = $ProxyOverride
+        if ($ProxyServerUrl -notmatch "^http") { $ProxyServerUrl = "http://$ProxyServerUrl" }
     }
 }
 
-Stop-Process -Name "7za", "aria2c", "node", "git" -Force -ErrorAction SilentlyContinue
+# [CLEANUP] Smart Process Manager: Only terminate processes started from THIS portable environment
+$targetProcs = @("7za", "aria2c", "node", "git")
+Get-Process -Name $targetProcs -ErrorAction SilentlyContinue | Where-Object { 
+    $_.Path -and $_.Path.StartsWith($PSScriptRoot, [System.StringComparison]::InvariantCultureIgnoreCase) 
+} | Stop-Process -Force -ErrorAction SilentlyContinue
 
 # ========================================================
 # 1. Workspace & Variables Setup
@@ -526,8 +530,8 @@ if ($RunMode) {
         try { 
             npm run dev 
         } finally { 
-            Write-SetupStatus -Message "[CLEANUP] Terminating background Node.js processes..." -Type INFO
-            Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+            Write-SetupStatus -Message "[CLEANUP] Keeping background Node.js processes alive (Proxy support)..." -Type INFO
+            # Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
             $EnvMode = $true 
         }
     }
